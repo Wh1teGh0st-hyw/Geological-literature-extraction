@@ -73,7 +73,15 @@ class MainWindow(QMainWindow):
         self._new_action = QAction("新建项目(&N)", self)
         self._new_action.setShortcut(QKeySequence.New)
         self._new_action.triggered.connect(self._on_new_project)
-        file_menu.addAction(self._new_action)
+        # 工具栏
+        self._classify_action = QAction("自动分类(&C)", self)
+        self._classify_action = QAction("自动分类(&C)", self)
+        self._classify_action.triggered.connect(self._on_classify)
+        self._export_action = QAction("导出数据(&E)", self)
+        self._export_action.triggered.connect(self._on_export_data)
+        self._refresh_action = QAction("刷新数据(&R)", self)
+        self._refresh_action.setShortcut(QKeySequence("F5"))
+        self._refresh_action.triggered.connect(self._on_refresh)
 
         self._open_action = QAction("打开项目(&O)", self)
         self._open_action.setShortcut(QKeySequence.Open)
@@ -123,11 +131,19 @@ class MainWindow(QMainWindow):
 
         # 视图菜单
         view_menu = menu_bar.addMenu("视图(&V)")
+        view_menu.addAction(self._refresh_action)
 
-        refresh_action = QAction("刷新数据(&R)", self)
-        refresh_action.setShortcut(QKeySequence("F5"))
-        refresh_action.triggered.connect(self._on_refresh)
-        view_menu.addAction(refresh_action)
+        # 分类菜单
+        classify_menu = menu_bar.addMenu("分类(&C)")
+        classify_menu.addAction(self._classify_action)
+
+        batch_classify = QAction("批量重分类(&B)", self)
+        batch_classify.triggered.connect(self._on_batch_reclassify)
+        classify_menu.addAction(batch_classify)
+
+        # 工具菜单
+        tools_menu = menu_bar.addMenu("工具(&T)")
+        tools_menu.addAction(self._export_action)
 
         # 帮助菜单
         help_menu = menu_bar.addMenu("帮助(&H)")
@@ -156,13 +172,15 @@ class MainWindow(QMainWindow):
         toolbar.addAction(self._import_pdf_action)
         toolbar.addSeparator()
 
-        # TODO: 后续阶段添加
-        # batch_extract = QAction("批量提取", self)
-        # classify = QAction("自动分类", self)
-        # export = QAction("导出Excel", self)
-        # toolbar.addAction(batch_extract)
-        # toolbar.addAction(classify)
-        # toolbar.addAction(export)
+        # 分类与导出（Phase 2 已启用）
+        self._classify_action = QAction("自动分类(&C)", self)
+        self._classify_action.triggered.connect(self._on_classify)
+        toolbar.addAction(self._classify_action)
+
+        self._export_action = QAction("导出数据(&E)", self)
+        self._export_action.setShortcut(QKeySequence("Ctrl+E"))
+        self._export_action.triggered.connect(self._on_export_data)
+        toolbar.addAction(self._export_action)
 
     # ── 中央区域 ───────────────────────────────────
 
@@ -480,6 +498,92 @@ class MainWindow(QMainWindow):
                 logger.warning(f"保存表格到数据库失败: {e}")
         self._project.db.conn.commit()
         logger.info(f"{len(tables)} 个表格已保存到数据库")
+
+    def _on_classify(self):
+        """打开分类对话框。"""
+        if not self._project.has_project:
+            QMessageBox.information(self, "提示", "请先打开一个包含数据的项目。")
+            return
+
+        # 获取当前数据网格中的样本
+        df = self._data_grid.get_dataframe()
+        if len(df) == 0:
+            QMessageBox.information(self, "提示", "没有数据可供分类。请先导入 Excel 数据。")
+            return
+
+        samples = df.to_dict(orient="records")
+
+        from .dialogs.classification import ClassificationDialog
+        dialog = ClassificationDialog(self, samples=samples)
+
+        def on_applied(changes):
+            """应用分类变更到数据库。"""
+            if not changes:
+                return
+
+            # 更新数据网格中的花岗岩类型列
+            for idx, new_type, confidence, subtype in changes:
+                if idx < len(df):
+                    # 找到 Granite type 列
+                    type_col = None
+                    for col_name in ["Granite type", "花岗岩类型", "Giranite type"]:
+                        if col_name in df.columns:
+                            type_col = col_name
+                            break
+                    if type_col:
+                        df.at[idx, type_col] = new_type
+
+            self._data_grid.load_dataframe(df)
+            self._data_grid.refresh()
+
+            # 更新数据库
+            if self._project.has_project:
+                try:
+                    repo = self._project.repo
+                    for idx, new_type, confidence, subtype in changes:
+                        sample_no = str(df.iloc[idx]["Sample.No"]) if idx < len(df) else None
+                        if sample_no:
+                            self._project.db.conn.execute(
+                                "UPDATE geochem_samples SET granite_type=?, auto_classification=? WHERE sample_no=?",
+                                (new_type, new_type, sample_no),
+                            )
+                    self._project.db.conn.commit()
+                except Exception as e:
+                    logger.warning(f"数据库分类更新失败: {e}")
+
+            self._update_ui_state()
+            self.status_bar.showMessage(f"分类完成: {len(changes)} 项变更", 5000)
+
+        dialog.classification_applied.connect(on_applied)
+        dialog.exec()
+
+    def _on_export_data(self):
+        """打开导出对话框。"""
+        if not self._project.has_project:
+            QMessageBox.information(self, "提示", "请先打开一个包含数据的项目。")
+            return
+
+        df = self._data_grid.get_dataframe()
+        if len(df) == 0:
+            QMessageBox.information(self, "提示", "没有数据可供导出。请先导入 Excel 数据。")
+            return
+
+        samples = df.to_dict(orient="records")
+
+        from .dialogs.export import ExportDialog
+        dialog = ExportDialog(self, samples=samples, sample_count=len(samples))
+
+        def on_exported(config):
+            self.status_bar.showMessage(
+                f"导出完成: {os.path.basename(config['output_path'])}", 5000
+            )
+
+        dialog.export_requested.connect(on_exported)
+        dialog.exec()
+
+    def _on_batch_reclassify(self):
+        """批量重分类。"""
+        self._on_classify()
 
     def _on_refresh(self):
         """刷新数据视图。"""

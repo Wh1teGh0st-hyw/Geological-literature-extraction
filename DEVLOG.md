@@ -180,7 +180,23 @@ PDFs: 5 篇 (spgz/ 目录)
 2. matplotlib 作为可选依赖 → ChartRenderer 加 `is_available()` 检测
 
 ### 下一步
-- 项目全部5步完成，可进行最终总体验证
+- Phase 2 · P0 核心补强：表格质量优化 + 分类对话框 + 导出对话框
+
+---
+
+## [2026-06-25 17:00] Phase 2 · P0 核心补强
+
+### 已完成
+- ✅ P2-01：表格提取质量优化 — 化学式碎片化修复模块（`merge_fragmented_chemicals`, `normalize_chemical_header`）
+- ✅ P2-02：数据网格分类着色 — QTableView 行按 I/S/A/M型 着色（10%透明度分类色），`GeochemTableModel.data()` 新增 `Qt.BackgroundRole` 支持
+
+### 待完成
+- ✅ P2-03：分类对话框（ClassificationDialog + ClassificationTableModel）
+- ✅ P2-04：导出对话框（ExportDialog 列/Sheet/格式选择）
+- ✅ 集成测试：10样本分类+导出测试全部通过
+
+### 下一步
+- P2 P1 阶段：动态筛选面板 + 合并冲突对话框 + 内嵌图表Qt画布
 
 ---
 

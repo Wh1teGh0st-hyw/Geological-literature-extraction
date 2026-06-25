@@ -9,6 +9,7 @@
 from typing import Optional, Any, List
 import pandas as pd
 from PySide6.QtCore import QAbstractTableModel, Qt, QModelIndex
+from PySide6.QtGui import QColor
 
 
 # ── 94列显示名称（中文） ────────────────────────────
@@ -74,12 +75,33 @@ class GeochemTableModel(QAbstractTableModel):
             return Qt.AlignLeft | Qt.AlignVCenter
 
         if role == Qt.ForegroundRole:
-            # 未分类样本使用灰色字体标记
             if col == 4:  # Granite type 列
                 value = self._df.iloc[row, col]
                 if pd.isna(value) or str(value).strip() == "":
-                    from .theme import Colors
+                    from ..theme import Colors
                     return Colors.TEXT_MUTED
+
+        if role == Qt.BackgroundRole:
+            # 按花岗岩类型着色整行
+            if "花岗岩类型" in self._df.columns or "Granite type" in self._df.columns:
+                type_col = "Granite type" if "Granite type" in self._df.columns else "花岗岩类型"
+                gtype = str(self._df.iloc[row][type_col]).strip().upper() if type_col in self._df.columns else ""
+            else:
+                # 查找第4列 (0-indexed = Granite type)
+                if len(self._df.columns) > 4:
+                    gtype = str(self._df.iloc[row, 4]).strip().upper()
+                else:
+                    gtype = ""
+
+            from ..theme import Colors
+            if "A-" in gtype or "ATYPE" in gtype or "A型" in gtype:
+                return QColor(Colors.ATYPE + "30")  # 10% opacity green
+            elif "S-" in gtype or "STYPE" in gtype or "S型" in gtype:
+                return QColor(Colors.STYPE + "30")  # 10% opacity red
+            elif "M-" in gtype or "MTYPE" in gtype or "M型" in gtype:
+                return QColor(Colors.MTYPE + "30")  # 10% opacity purple
+            elif "I-" in gtype or "ITYPE" in gtype or "I型" in gtype:
+                return QColor(Colors.ITYPE + "30")  # 10% opacity blue
 
         return None
 
