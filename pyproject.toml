@@ -1,0 +1,36 @@
+[project]
+name = "geochem-extractor"
+version = "0.1.0"
+description = "PDF地质文献表格提取与地球化学数据管理软件"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "花岗岩研究团队"},
+]
+dependencies = [
+    "PySide6>=6.6",
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "openpyxl>=3.1",
+    "pdfplumber>=0.11",
+    "PyMuPDF>=1.24",
+    "loguru>=0.7",
+    "pydantic>=2.0",
+    "pyinstaller>=6.0",
+]
+
+[project.optional-dependencies]
+ocr = ["paddlepaddle", "paddleocr"]
+charts = ["matplotlib>=3.8", "pyrolite>=0.35"]
+dev = ["pytest>=8.0", "pytest-qt>=4.2"]
+
+[project.scripts]
+geochem-extractor = "geochem_extractor.app:main"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]

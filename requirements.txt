@@ -1,0 +1,31 @@
+# GeoChemExtractor - 桌面版PDF地球化学数据提取与管理软件
+# Windows 10/11, Python 3.13+
+
+# UI框架
+PySide6>=6.6
+
+# PDF处理
+pdfplumber>=0.11
+PyMuPDF>=1.24
+pdfminer.six
+
+# OCR（图片型PDF表格识别，后续阶段安装）
+# paddlepaddle
+# paddleocr
+
+# 数据处理
+pandas>=2.0
+numpy>=1.24
+openpyxl>=3.1
+
+# 地球化学计算（后续阶段安装）
+# pyrolite>=0.35
+
+# 日志
+loguru>=0.7
+
+# 数据模型
+pydantic>=2.0
+
+# 打包（开发阶段不必须）
+pyinstaller>=6.0

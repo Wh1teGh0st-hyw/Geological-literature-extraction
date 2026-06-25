@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.spec.bak
+
+# 虚拟环境
+venv/
+.venv/
+
+# 日志
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 测试产物
+test_project.gce
+test_export.*
+
+# 打包产物
+dist/
+*.exe
+
+# 数据文件（示例）
+*.gce
+!example.gce
