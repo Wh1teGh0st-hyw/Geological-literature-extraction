@@ -126,6 +126,8 @@ class TableExtractionEngine:
             return self._extract_pymupdf(pdf_path, page_number, candidate, index)
         elif method == "heuristic":
             return self._extract_heuristic(pdf_path, page_number, candidate, index)
+        elif method == "ocr":
+            return self._extract_ocr(pdf_path, page_number, candidate, index)
         else:
             return self._extract_pdfplumber(pdf_path, page_number, candidate, index)
 
@@ -515,6 +517,96 @@ class TableExtractionEngine:
         """获取 PDF 的所有页码。"""
         with pdfplumber.open(pdf_path) as pdf:
             return list(range(len(pdf.pages)))
+
+    def _extract_ocr(self, pdf_path: str, page_number: int,
+                     candidate: TableCandidate, index: int) -> Optional[ExtractedTable]:
+        """使用 EasyOCR 处理图片型 PDF 页面的表格提取。
+
+        流程:
+        1. pdf2image 将页面转为图片（如果 PDF 本身是图片型）
+        2. 裁剪到候选区域的 bbox
+        3. EasyOCR 识别文字 + 位置
+        4. 基于 y 坐标聚类行，x 坐标分割列
+        5. 重建为 DataFrame
+        """
+        try:
+            import easyocr
+        except ImportError:
+            logger.warning("EasyOCR 未安装。请运行: pip install easyocr")
+            return None
+
+        try:
+            from pdf2image import convert_from_path
+            import numpy as np
+        except ImportError:
+            logger.warning("pdf2image 未安装。请运行: pip install pdf2image")
+            return None
+
+        try:
+            # 将 PDF 页面渲染为图片
+            images = convert_from_path(
+                pdf_path, first_page=page_number + 1,
+                last_page=page_number + 1, dpi=200
+            )
+            if not images:
+                return None
+
+            image = images[0]
+
+            # 裁剪到表格候选区域
+            if candidate.bbox != (0, 0, 0, 0):
+                pw, ph = 595, 842  # A4 标准点
+                img_w, img_h = image.size
+                x_scale, y_scale = img_w / pw, img_h / ph
+                x0 = int(candidate.bbox[0] * x_scale)
+                y0 = int(candidate.bbox[1] * y_scale)
+                x1 = int(candidate.bbox[2] * x_scale)
+                y1 = int(candidate.bbox[3] * y_scale)
+                image = image.crop((x0, y0, x1, y1))
+
+            # EasyOCR 识别
+            reader = easyocr.Reader(["ch_sim", "en"], gpu=False)
+            results = reader.readtext(np.array(image))
+
+            if not results:
+                return None
+
+            # 按 y 坐标聚类行（容差 10px）
+            rows = {}
+            y_tolerance = 10
+            for (bbox, text, conf) in results:
+                y_center = (bbox[0][1] + bbox[2][1]) / 2
+                row_key = round(y_center / y_tolerance) * y_tolerance
+                if row_key not in rows:
+                    rows[row_key] = []
+                rows[row_key].append((bbox[0][0], text, conf))
+
+            # 按 y 坐标排序行
+            sorted_rows = sorted(rows.items())
+
+            # 提取每行的文本（按 x 坐标排序列）
+            table_data = []
+            for _, row_items in sorted_rows:
+                row_items.sort(key=lambda r: r[0])  # 按 x 排序
+                cells = [item[1] for item in row_items]
+                table_data.append(cells)
+
+            if len(table_data) < 2:
+                return None
+
+            df = self._clean_dataframe(table_data, candidate)
+            if df is None or len(df) < 2:
+                return None
+
+            result = self._build_table_result(df, pdf_path, page_number, index, candidate)
+            result.method = "easyocr"
+            result.is_image_based = True
+            result.confidence = min(0.8, candidate.confidence)
+            return result
+
+        except Exception as e:
+            logger.warning(f"OCR 提取失败 (page {page_number + 1}): {e}")
+            return None
 
 
 # ── 快捷函数 ──────────────────────────────────────────

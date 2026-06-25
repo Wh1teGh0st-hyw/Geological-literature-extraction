@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QMenuBar, QToolBar, QStatusBar, QTabWidget, QFileDialog,
     QMessageBox, QLabel, QApplication,
 )
-from PySide6.QtCore import Qt, QSize, QTimer
+from PySide6.QtCore import Qt, QSize, QTimer, QThread
 from PySide6.QtGui import QAction, QKeySequence, QIcon
 
 from .theme import Colors, APP_STYLESHEET
@@ -45,6 +45,9 @@ class MainWindow(QMainWindow):
         self._apply_theme()
         self._connect_signals()
         self._update_ui_state()
+
+        # 启动后静默检测更新
+        self._check_for_updates()
 
     # ── 窗口初始化 ──────────────────────────────────
 
@@ -711,6 +714,36 @@ class MainWindow(QMainWindow):
             classified=summary["classified"],
             pdfs=summary["pdfs"],
         )
+
+    def _check_for_updates(self):
+        """启动后 3 秒静默检测更新。"""
+        self._update_timer = QTimer()
+        self._update_timer.setSingleShot(True)
+        self._update_timer.timeout.connect(self._do_update_check)
+        self._update_timer.start(3000)
+
+    def _do_update_check(self):
+        """实际执行更新检测（在后台线程中）。"""
+        from services.update_checker import UpdateChecker
+
+        class UpdateThread(QThread):
+            result_ready = Signal(object)
+
+            def run(self):
+                checker = UpdateChecker()
+                self.result_ready.emit(checker.check())
+
+        self._update_thread = UpdateThread()
+        self._update_thread.result_ready.connect(self._on_update_result)
+        self._update_thread.start()
+
+    def _on_update_result(self, result):
+        """处理更新检测结果。"""
+        if result:
+            from services.update_checker import UpdateChecker
+            UpdateChecker.show_update_dialog(
+                self, result["version"], result["url"]
+            )
 
     def _update_ui_state(self):
         """根据当前项目状态更新 UI 元素。"""

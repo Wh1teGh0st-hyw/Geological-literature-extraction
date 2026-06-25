@@ -218,8 +218,20 @@ PDFs: 5 篇 (spgz/ 目录)
 ```
 
 ### 下一步
-- Phase 2 P2：OCR + 打包脚本 + 中文使用手册
+- 项目 Phase 2 全部分阶段完成，可进行最终总体验证
 
+---
+
+## [2026-06-25 18:00] Phase 2 · P2 扩展能力
+
+### 已完成
+- ✅ P2-09：OCR 图片表格提取 — EasyOCR 接入（中英文双语），自动检测图片页→渲染→识别→重建表格
+- ✅ P2-10：PyInstaller 一键打包脚本 — `scripts/build_exe.sh`
+- ✅ P2-11：中文使用手册 — `docs/使用手册.md`（9章 + 2附录）
+- ✅ P2-12：自动更新检测 — UpdateChecker（GitHub Releases API + 版本比较 + 更新对话框）
+
+### 下一步
+- 项目全部完成，可进行最终总体验证
 ### 待完成
 - ✅ 生成 `requirements-lock.txt`（41个包版本锁定）
 
