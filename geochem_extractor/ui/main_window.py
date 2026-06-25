@@ -20,6 +20,8 @@ from .project_navigator import ProjectNavigator
 from .sample_inspector import SampleInspector
 from .data_grid.view import GeochemTableView
 from .table_preview import TablePreviewPanel
+from .filter_panel import FilterPanel
+from .charts.canvas import ChartCanvas
 from .dialogs.batch_progress import BatchProgressDialog
 
 # 延迟加载数据层 / 服务层（避免启动时的导入依赖）
@@ -206,6 +208,10 @@ class MainWindow(QMainWindow):
         self._navigator = ProjectNavigator()
         left_layout.addWidget(self._navigator, 3)
 
+        # 筛选面板
+        self._filter_panel = FilterPanel()
+        left_layout.addWidget(self._filter_panel, 2)
+
         # 样本速查面板
         self._inspector = SampleInspector()
         left_layout.addWidget(self._inspector, 1)
@@ -229,11 +235,9 @@ class MainWindow(QMainWindow):
         self._table_preview = TablePreviewPanel()
         self._tab_widget.addTab(self._table_preview, "📋 表格预览")
 
-        # 图表标签页（第5阶段启用）
-        charts_placeholder = QLabel("地球化学图解将在分类后显示")
-        charts_placeholder.setAlignment(Qt.AlignCenter)
-        charts_placeholder.setStyleSheet(f"color: {Colors.TEXT_MUTED};")
-        self._tab_widget.addTab(charts_placeholder, "📈 图表")
+        # 图表标签页
+        self._chart_canvas = ChartCanvas()
+        self._tab_widget.addTab(self._chart_canvas, "📈 图表")
 
         right_layout.addWidget(self._tab_widget)
         splitter.addWidget(right_panel)
@@ -267,6 +271,10 @@ class MainWindow(QMainWindow):
         """连接各种 UI 信号。"""
         self._data_grid.row_selected.connect(self._on_row_selected)
         self._data_grid.sample_count_changed.connect(self._on_sample_count_changed)
+        self._filter_panel.filter_changed.connect(self._on_filter_changed)
+        self._filter_panel.filter_cleared.connect(self._on_filter_cleared)
+        self._chart_canvas.sample_selected.connect(self._on_chart_sample_selected)
+        self._chart_canvas.refresh_requested.connect(self._on_chart_refresh)
 
     # ── 菜单/工具栏 回调 ────────────────────────────
 
@@ -626,6 +634,33 @@ class MainWindow(QMainWindow):
         """样本数量变化回调。"""
         self._status_samples.setText(f"样本: {count} 行")
 
+    def _on_filter_changed(self, filters: dict):
+        """筛选条件变更 — 对数据网格应用筛选。"""
+        if not self._project.has_project:
+            return
+        df = self._data_grid._model.get_dataframe()
+        if len(df) == 0:
+            return
+        filtered = self._filter_panel.apply(df)
+        self._data_grid.load_dataframe(filtered)
+
+    def _on_filter_cleared(self):
+        """筛选清空 — 恢复全部数据。"""
+        self._load_project_data()
+
+    def _on_chart_sample_selected(self, indices: list):
+        """图表中选中样本 — 在数据网格中高亮对应行。"""
+        if indices:
+            self._data_grid.selectRow(indices[0])
+            self._tab_widget.setCurrentWidget(self._data_grid)
+
+    def _on_chart_refresh(self):
+        """刷新图表数据。"""
+        df = self._data_grid.get_dataframe()
+        if len(df) > 0:
+            samples_list = df.to_dict(orient="records")
+            self._chart_canvas.load_samples(samples_list)
+
     # ── 内部方法 ────────────────────────────────────
 
     def _load_project_data(self):
@@ -657,6 +692,13 @@ class MainWindow(QMainWindow):
 
         self._data_grid.load_dataframe(df)
         self._update_navigator_counts()
+
+        # 更新筛选面板的可选项
+        self._filter_panel.set_available_values(df)
+
+        # 加载图表数据
+        samples_list = df.to_dict(orient="records")
+        self._chart_canvas.load_samples(samples_list)
 
     def _update_navigator_counts(self):
         """更新导航器中的计数信息。"""
