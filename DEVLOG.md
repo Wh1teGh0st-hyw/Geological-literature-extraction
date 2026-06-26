@@ -242,22 +242,17 @@ OCR 引擎: EasyOCR 1.7.2 ch_sim+en ✅
 ```
 
 ### 当前项目规模（最终）
-- 35 个 Python 源文件 + 4 份核心文档 + 5 个脚本 + 1 份使用手册
-- 8 个引擎模块 + 4 个数据层模块 + 8 个 UI 层模块 + 2 个服务层模块 + 2 个地化模块
+- 36 个 Python 源文件 + 4 份核心文档 + 5 个脚本 + 1 份使用手册
+- 8 个引擎模块 + 4 个数据层模块 + 8 个 UI 层模块 + 3 个服务层模块 + 2 个地化模块
 - 依赖: 62 个 Python 包
-- Git: 4 次提交，已推送到 GitHub
+- EasyOCR 1.7.2 作为 OCR 引擎（PaddlePaddle 暂不支持 Python 3.14）
 
 ### 下一步
 - 项目全部完成。可在 GitHub Releases 页面发布 v0.1.0 正式版
 
----
-
-_日志格式说明：每次操作后添加新条目，包含[日期 时间]、已完成事项、待办事项、遇到的问题和下一步计划。_
-- PaddleOCR 标记为第2阶段可选依赖（避免初期安装复杂度）
-- pyrolite/matplotlib 标记为后续阶段依赖
-
-### 下一步
-- 第1步：基础框架 — 创建 SQLite schema、Pydantic模型、Claude主题UI、数据网格
+### 遇到的问题
+- Python 3.14 不支持 PaddlePaddle → 改用 EasyOCR 做 OCR 引擎
+- 表头匹配顺序问题 → latitude 去掉 "Y" 别名，避免与微量元素 Y 冲突
 
 ---
 
