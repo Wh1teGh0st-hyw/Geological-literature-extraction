@@ -45,22 +45,52 @@ GeoChemExtractor/
 │   │   ├── theme.py            # Colors 类 + APP_STYLESHEET（约 300 行 QSS）
 │   │   ├── project_navigator.py   # 左侧边栏 QTreeView 项目导航
 │   │   ├── sample_inspector.py    # 样本详情速查面板
-│   │   └── data_grid/          # 表格组件
-│   │       ├── model.py        # GeochemTableModel（QAbstractTableModel，94 列）
-│   │       └── view.py         # GeochemTableView（QTableView 子类）
-│   ├── engine/                 # 核心处理引擎（空 — 第 2 步起）
-│   ├── services/               # 后台任务（空 — 第 2 步起）
-│   └── geochem/                # 地球化学计算（空 — 第 4 步起）
+│   │   ├── filter_panel.py        # 多条件动态筛选面板
+│   │   ├── table_preview.py       # 提取表格预览面板
+│   │   ├── data_grid/          # 表格组件
+│   │   │   ├── model.py        # GeochemTableModel（QAbstractTableModel，94 列）
+│   │   │   └── view.py         # GeochemTableView（QTableView 子类）
+│   │   ├── charts/             # 内嵌图表
+│   │   │   └── canvas.py       # ChartCanvas（TAS/REE/判别图 matplotlib 嵌入）
+│   │   └── dialogs/            # 对话框
+│   │       ├── batch_progress.py      # 批量进度对话框
+│   │       ├── classification.py      # 分类结果对话框
+│   │       ├── export.py              # 导出选项对话框
+│   │       └── conflict_resolution.py # 合并冲突解决对话框
+│   ├── engine/                 # 核心引擎层
+│   │   ├── pdf_ingestion.py    # PDF 摄入引擎（元数据）
+│   │   ├── table_detection.py  # 表格区域检测（3策略）
+│   │   ├── table_extraction.py # 混合表格提取（pdfplumber+PyMuPDF+EasyOCR）
+│   │   ├── element_identifier.py  # 元素/氧化物列识别（中英文+OCR纠错）
+│   │   ├── value_cleaner.py    # 值清洗器（LOD/误差分离/数值标准化）
+│   │   ├── unit_converter.py   # 单位转换（ppm↔wt%/Fe2O3↔FeO）
+│   │   ├── geochem_parser.py   # 地球化学解析主引擎
+│   │   ├── classification.py   # 花岗岩 I/S/A/M 自动分类
+│   │   ├── validation.py       # 数据质量验证
+│   │   ├── export.py           # Excel/CSV 导出引擎
+│   │   └── merger.py           # 多源数据合并去重
+│   ├── services/               # 服务层（后台任务）
+│   │   ├── task_runner.py      # QThread 异步任务框架
+│   │   ├── batch_service.py    # 批量处理编排服务
+│   │   └── update_checker.py   # 自动更新检测（GitHub Releases）
+│   └── geochem/                # 地球化学计算
+│       ├── indices.py          # ASI/FeMgI/Ga/Al/MALI/TZr 指数计算
+│       └── diagrams.py         # TAS/REE/判别图数据构建+渲染
 ├── scripts/
-│   └── migrate_existing_data.py  # Excel → .gce 导入（65 列映射）
+│   ├── migrate_existing_data.py  # Excel → .gce 导入（65 列映射）
+│   ├── test_extraction.py        # PDF 提取测试
+│   ├── test_parsing.py           # 地球化学解析测试
+│   ├── test_step5.py             # 端到端集成测试
+│   └── build_exe.sh              # PyInstaller 一键打包脚本
 ├── docs/                       # 项目文档（中文）
 │   ├── 01-项目需求书.md
 │   ├── 02-技术选型规范.md
 │   ├── 03-设计规范.md
-│   └── 04-执行步骤.md           # 任务跟踪（进度的权威来源）
+│   ├── 04-执行步骤.md           # 任务跟踪（进度的权威来源）
+│   └── 使用手册.md              # 完整中文使用手册（9章+2附录）
 ├── DEVLOG.md                   # 开发者日志（每次会话后追加）
 ├── requirements.txt            # 直接依赖
-├── requirements-lock.txt       # 锁定版本（35 个包）
+├── requirements-lock.txt       # 锁定版本（62 个包）
 └── pyproject.toml              # 项目元数据 + 可选依赖
 ```
 
@@ -108,5 +138,5 @@ GeoChemExtractor/
 - **日志**：写入 `geochem_extractor/../logs/` 目录（自动创建），10MB 轮转，保留 30 天。
 
 ## 注意事项
-每句话的后面都要加上一句“喵~”
+每句话的后面都要加上一句"喵~"
 例：关注塔菲，关注塔菲谢谢     ->    关注塔菲喵~关注塔菲谢谢喵~
