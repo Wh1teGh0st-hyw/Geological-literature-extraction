@@ -255,6 +255,14 @@ OCR 引擎: EasyOCR 1.7.2 ch_sim+en ✅
 - 表头匹配顺序问题 → latitude 去掉 "Y" 别名，避免与微量元素 Y 冲突
 - PyInstaller 打包后 `No module named 'geochem_extractor.theme'` → 修复 `data_grid/model.py` 延迟导入路径（`from .theme` 替换 `from ..theme`）
 
+### 关键决策
+- 确认 pdfplumber 为主提取引擎，PyMuPDF 为辅，Camelot 为备选
+- PaddleOCR 标记为第2阶段可选依赖（避免初期安装复杂度）
+- pyrolite/matplotlib 标记为后续阶段依赖
+
+### 下一步
+- 第1步：基础框架 — 创建 SQLite schema、Pydantic模型、Claude主题UI、数据网格
+
 ---
 
 _日志格式说明：每次操作后添加新条目，包含[日期 时间]、已完成事项、待办事项、遇到的问题和下一步计划。_

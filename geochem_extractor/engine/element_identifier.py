@@ -66,7 +66,7 @@ TARGET_COLUMNS = [
     ("ga", ["Ga", "镓", "Gallium"], "trace"),
     ("rb", ["Rb", "铷", "Rubidium"], "trace"),
     ("sr", ["Sr", "锶", "Strontium"], "trace"),
-    ("y",  ["Y", "钇", "Yttrium", "Y element"], "trace"),
+    ("y",  ["Y element", "钇", "Yttrium"], "trace"),
     ("zr", ["Zr", "锆", "Zirconium"], "trace"),
     ("nb", ["Nb", "铌", "Niobium"], "trace"),
     ("cs", ["Cs", "铯", "Cesium", "Caesium"], "trace"),
@@ -166,7 +166,7 @@ class ElementIdentifier:
         if t in self.OCR_CORRECTIONS:
             return self.OCR_CORRECTIONS[t]
         # 通用规则
-        t = t.replace("0", "o")  # 可能反过来用 - 待定
+        t = t.replace("0", "o")
         return text
 
     def _levenshtein_distance(self, s1: str, s2: str) -> int:
