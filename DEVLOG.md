@@ -260,9 +260,3 @@ OCR 引擎: EasyOCR 1.7.2 ch_sim+en ✅
 - PaddleOCR 标记为第2阶段可选依赖（避免初期安装复杂度）
 - pyrolite/matplotlib 标记为后续阶段依赖
 
-### 下一步
-- 第1步：基础框架 — 创建 SQLite schema、Pydantic模型、Claude主题UI、数据网格
-
----
-
-_日志格式说明：每次操作后添加新条目，包含[日期 时间]、已完成事项、待办事项、遇到的问题和下一步计划。_
