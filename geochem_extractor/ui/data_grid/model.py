@@ -78,8 +78,8 @@ class GeochemTableModel(QAbstractTableModel):
             if col == 4:  # Granite type 列
                 value = self._df.iloc[row, col]
                 if pd.isna(value) or str(value).strip() == "":
-                    from ..theme import Colors
-                    return Colors.TEXT_MUTED
+                    from .theme import Colors as _Colors
+                    return _Colors.TEXT_MUTED
 
         if role == Qt.BackgroundRole:
             # 按花岗岩类型着色整行
@@ -93,15 +93,15 @@ class GeochemTableModel(QAbstractTableModel):
                 else:
                     gtype = ""
 
-            from ..theme import Colors
+            from .theme import Colors as _Colors
             if "A-" in gtype or "ATYPE" in gtype or "A型" in gtype:
-                return QColor(Colors.ATYPE + "30")  # 10% opacity green
+                return QColor(_Colors.ATYPE + "30")
             elif "S-" in gtype or "STYPE" in gtype or "S型" in gtype:
-                return QColor(Colors.STYPE + "30")  # 10% opacity red
+                return QColor(_Colors.STYPE + "30")
             elif "M-" in gtype or "MTYPE" in gtype or "M型" in gtype:
-                return QColor(Colors.MTYPE + "30")  # 10% opacity purple
+                return QColor(_Colors.MTYPE + "30")
             elif "I-" in gtype or "ITYPE" in gtype or "I型" in gtype:
-                return QColor(Colors.ITYPE + "30")  # 10% opacity blue
+                return QColor(_Colors.ITYPE + "30")
 
         return None
 

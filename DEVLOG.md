@@ -253,6 +253,7 @@ OCR 引擎: EasyOCR 1.7.2 ch_sim+en ✅
 ### 遇到的问题
 - Python 3.14 不支持 PaddlePaddle → 改用 EasyOCR 做 OCR 引擎
 - 表头匹配顺序问题 → latitude 去掉 "Y" 别名，避免与微量元素 Y 冲突
+- PyInstaller 打包后 `No module named 'geochem_extractor.theme'` → 修复 `data_grid/model.py` 延迟导入路径（`from .theme` 替换 `from ..theme`）
 
 ---
 
